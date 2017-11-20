@@ -20,6 +20,7 @@ namespace Phosphorum\Provider\Config;
 use Phalcon\Config;
 use League\Flysystem\Filesystem;
 
+use Phalcon\Di;
 /**
  * Phosphorum\Provider\Config\Factory
  *
@@ -33,9 +34,18 @@ class Factory
      * @param  array  $providers
      * @return Config
      */
-    public static function create(array $providers = [])
+    public static function create(string $path)
     {
-        return self::load($providers);
+        /** @var Filesystem $filesystem */
+        $filesystem = Di::getDefault()->get('filesystem', [$path]);
+        $files = array_filter($filesystem->listContents(), function ($metadata) {
+            return isset($metadata['type']) &&
+            $metadata['type'] == 'file' &&
+            isset($metadata['extension']) &&
+            $metadata['extension'] == 'php';
+        });
+
+        return self::load($files);
     }
 
     /**
@@ -44,13 +54,14 @@ class Factory
      * @param  array $providers
      * @return Config
      */
-    protected static function load(array $providers)
+    protected static function load(array $files)
     {
         $config = new Config();
         $merge  = self::merge();
 
         /** @var Filesystem $filesystem */
-        $filesystem = container('filesystem', [cache_path('config')]);
+//        $filesystem = container('filesystem', [cache_path('config')]);
+        $filesystem = Di::getDefault()->get('filesystem', [cache_path('config')]);
 
         if ($filesystem->has('cached.php') && !environment('development')) {
             $merge($config, cache_path('config/cached.php'));
@@ -58,8 +69,10 @@ class Factory
             return $config;
         }
 
-        foreach ($providers as $provider) {
-            $merge($config, config_path("$provider.php"), $provider == 'config' ? null : $provider);
+        foreach ($files as $file) {
+//            var_dump($file['filename']);die;
+//            $merge($config, config_path("$provider.php"), $provider == 'config' ? null : $provider);
+            $merge($config, config_path($file['path']), $file['filename']);
         }
 
         if (environment('production') && !$filesystem->has('cached.php')) {
@@ -87,7 +100,7 @@ class Factory
                 if (!$config->offsetExists($node) || !$config->{$node} instanceof Config) {
                     $config->offsetSet($node, new Config());
                 }
-
+                //var_dump($config->get($node)->merge($toMerge));die;
                 return $config->get($node)->merge($toMerge);
             }
 

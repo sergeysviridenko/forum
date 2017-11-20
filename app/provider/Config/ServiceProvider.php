@@ -83,7 +83,8 @@ class ServiceProvider extends AbstractServiceProvider
         $this->di->setShared(
             $this->serviceName,
             function () use ($configs) {
-                return Factory::create($configs);
+//                return Factory::create($configs);
+                return Factory::create(config_path());
             }
         );
     }

@@ -122,7 +122,10 @@ class Bootstrap
      */
     public function getOutput()
     {
+        var_dump(container('config')->toArray());die;
         if ($this->app instanceof MvcApplication) {
+
+//            var_dump(get_class_methods($this->app));die;
             return $this->app->handle()->getContent();
         }
 
