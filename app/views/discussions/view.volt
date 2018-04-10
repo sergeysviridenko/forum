@@ -81,6 +81,11 @@
               ])
           -}}
         {%- endfor -%}
+
+        {%- if pager is defined -%}
+              {{- partial('partials/paginate', ['pager': pager]) -}}
+        {%- endif -%}
+
         {%- if post.locked != 'Y' -%}
             {{-
                 partial('partials/post/comment-form', [

@@ -1,5 +1,9 @@
-<div class="col-md-8 col-md-offset-2 text-center">
+<div class="col-md-12 text-center">
+    {%- if (bootstrapOptions is not defined) -%}
+        {%- set bootstrapOptions = [] -%}
+    {%- endif -%}
+
     {%- if pager.haveToPaginate() -%}
-        {{- pager.getLayout() -}}
+        {{- pager.getLayout().getRendered(bootstrapOptions) -}}
     {%- endif -%}
 </div>

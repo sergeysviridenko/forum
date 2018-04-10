@@ -40,6 +40,7 @@ use Phalcon\Paginator\Pager\Range\Sliding;
 use Phosphorum\Model\ActivityNotifications;
 use Phalcon\Paginator\Pager\Layout\Bootstrap;
 use Phalcon\Paginator\Adapter\QueryBuilder as Paginator;
+use Phosphorum\Paginator\Pager\Layout\BootstrapExtended;
 
 /**
  * Class DiscussionsController
@@ -591,6 +592,46 @@ class DiscussionsController extends ControllerBase
                 'bind' => [$id, $ipAddress]
             ];
 
+            if (($currentPage = abs($this->request->getQuery('page', 'int'))) == 0) {
+                $currentPage = 1;
+            }
+$l  =2;//test
+            $postReply = (new PostsReplies())
+                ->getModelsManager()
+                ->createBuilder()
+                ->columns('r.*')
+                ->from(['r' => 'Phosphorum\Model\PostsReplies'])
+                ->where('r.posts_id = :post_id:', ['post_id' => $post->id])
+                ->orderBy('r.created_at ASC')
+                ->limit($l);
+
+            $pager = new Pager(
+                new Paginator([
+                    'builder' => $postReply,
+                    'limit'   => $l,
+                    'page'    => $currentPage,
+                ]),
+                [
+                    'layoutClass' => BootstrapExtended::class,
+                    'rangeClass'  => Sliding::class,
+                    'rangeLength' => 10,
+                    'urlMask'     => sprintf('%s?page={%%page_number}', ""),
+                ]
+            );
+
+            $bootstrapOptions = [
+                'ul_class' => 'pagination pagination-sm',
+            ];
+            $this->view->setVars([
+                'pager' => $pager,
+                'bootstrapOptions' => $bootstrapOptions,
+                ]);
+
+            $post->replies = $postReply
+                ->offset((int)($currentPage - 1) * $l)
+                ->getQuery()
+                ->execute();
+
             // A view is stored by ip address
             if (PostsViews::count($parameters) == 0 && $post->users_id != $usersId) {
                 // Increase the number of views in the post
@@ -675,7 +716,9 @@ class DiscussionsController extends ControllerBase
                 $postReply->in_reply_to_id = $this->request->getPost('reply-id', 'int');
                 $postReply->users_id       = $usersId;
                 $postReply->content        = $content;
-
+//var_dump($post);
+//var_dump($postReply);
+//die;
                 if ($postReply->save()) {
                     if ($post->users_id != $usersId && $canHaveBounty) {
                         $bounty                       = $post->getBounty();
@@ -715,7 +758,7 @@ class DiscussionsController extends ControllerBase
 
         // Set the post name as title
         $this->tag->setTitle($post->title . ' - Discussion');
-
+//var_dump($post);die;
         $this->view->setVars([
             'post'   => $post,
             'voted'  => $post->isParticipatedInPoll($usersId),
