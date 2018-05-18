@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Refactor `Assets/AssetsManagerExtended`
+- Update `erusev/parsedown` and delete code from `Phosphorum\Markdown\Markdown`
 
 ### Fixed
 - Fixed log path for errors in config.php [#473](https://github.com/phalcon/forum/issues/473)
